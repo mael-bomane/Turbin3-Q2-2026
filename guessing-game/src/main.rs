@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-fn main() {
-    println!("Hello, world!");
-}
-=======
 use std::cmp::Ordering;
 use std::io;
 
@@ -41,5 +36,3 @@ fn main() {
         }
     }
 }
-
->>>>>>> 686319d (finished rust game)
