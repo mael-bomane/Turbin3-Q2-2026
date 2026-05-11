@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "spl:init": "pnpm ts-node scripts/spl/init.ts",
-    "spl:metadata": "pnpm ts-node scripts/spl/metadata.ts",
-    "spl:mint": "pnpm ts-node scripts/spl/mint.ts",
-    "spl:transfer": "pnpm ts-node scripts/spl/transfer.ts",
-    "nft:image": "pnpm ts-node scripts/nft/image.ts",
-    "nft:metadata": "pnpm ts-node scripts/nft/metadata.ts",
-    "nft:mint": "pnpm ts-node scripts/nft/mint.ts"
+    "spl:init": "pnpm ts-node prereqs/spl/init.ts",
+    "spl:metadata": "pnpm ts-node prereqs/spl/metadata.ts",
+    "spl:mint": "pnpm ts-node prereqs/spl/mint.ts",
+    "spl:transfer": "pnpm ts-node prereqs/spl/transfer.ts",
+    "nft:image": "pnpm ts-node prereqs/nft/image.ts",
+    "nft:metadata": "pnpm ts-node prereqs/nft/metadata.ts",
+    "nft:mint": "pnpm ts-node prereqs/nft/mint.ts",
+    "nft:royalties": "pnpm ts-node prereqs/nft/royalties.ts"
   },
   "keywords": [],
   "author": "",
