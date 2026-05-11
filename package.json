@@ -1,0 +1,35 @@
+{
+  "name": "Turbin3-Q2-2026",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "spl:init": "pnpm ts-node scripts/spl/init.ts",
+    "spl:metadata": "pnpm ts-node scripts/spl/metadata.ts",
+    "spl:mint": "pnpm ts-node scripts/spl/mint.ts",
+    "spl:transfer": "pnpm ts-node scripts/spl/transfer.ts",
+    "nft:image": "pnpm ts-node scripts/nft/image.ts",
+    "nft:metadata": "pnpm ts-node scripts/nft/metadata.ts",
+    "nft:mint": "pnpm ts-node scripts/nft/mint.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@metaplex-foundation/mpl-core": "^1.10.0",
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
+    "@metaplex-foundation/umi": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
+    "@metaplex-foundation/umi-uploader-irys": "^1.5.0",
+    "@solana-program/system": "^0.12.0",
+    "@solana-program/token": "^0.13.0",
+    "@solana/kit": "^6.8.0",
+    "bs58": "^6.0.0"
+  }
+}
