@@ -8,6 +8,7 @@ classwork for turbin3 q2 2026, tinkering around codama & marketplace
 
 ```
 anchor-escrow/
+├── app/                                 # front-end, coming soon
 ├── Anchor.toml                          # anchor workspace config
 ├── Cargo.toml                           # rust workspace
 ├── rust-toolchain.toml
