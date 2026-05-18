@@ -334,3 +334,138 @@ fn bench_stored_vs_recompute() {
     row("withdraw", a_wd.1, b_wd.1);
     row("close", a_cl.1, b_cl.1);
 }
+
+// Empirical crossover: simulate N_USERS independent lifecycles
+// (init + M deposit+withdraw pairs) on each variant. Average per-call CU
+// across users, then plot cumulative cost (rent + Σ CU*lamports_per_CU)
+// and locate the call index at which Variant B (stored) becomes cheaper
+// on average than Variant A (recompute).
+//
+// Note: a *single* user with bump=255 sees Variant A cheaper for all calls
+// (recompute first-try beats stored-byte load by ~40 CU). Break-even only
+// holds in expectation over the bump distribution, so the test averages.
+#[test]
+fn confirm_break_even_lifecycle() {
+    let mut svm = setup();
+    let system_program = system_program::ID;
+    let pid_b = anchor_vault::id();
+    let pid_a = anchor_vault_rc::id();
+
+    const N_USERS: usize = 32;
+    const N_PAIRS: usize = 6;
+    let n_amort: usize = 2 * N_PAIRS;
+
+    // per_call_x[k][u] = CU for amortizing ix k of user u (k in 0..2N_PAIRS)
+    let mut per_call_a: Vec<Vec<u64>> = vec![Vec::with_capacity(N_USERS); n_amort];
+    let mut per_call_b: Vec<Vec<u64>> = vec![Vec::with_capacity(N_USERS); n_amort];
+    let mut init_a_cus: Vec<u64> = Vec::with_capacity(N_USERS);
+    let mut init_b_cus: Vec<u64> = Vec::with_capacity(N_USERS);
+
+    for _ in 0..N_USERS {
+        let payer = Keypair::new();
+        svm.airdrop(&payer.pubkey(), 5_000_000_000).unwrap();
+        let user = payer.pubkey();
+
+        let (state_b, _) = Pubkey::find_program_address(&[b"state", user.as_ref()], &pid_b);
+        let (vault_b, _) = Pubkey::find_program_address(&[b"vault", state_b.as_ref()], &pid_b);
+        let init_b = send(&mut svm, &payer, Instruction {
+            program_id: pid_b,
+            accounts: anchor_vault::accounts::Initialize { user, state: state_b, vault: vault_b, system_program }.to_account_metas(None),
+            data: anchor_vault::instruction::Initialize {}.data(),
+        });
+        init_b_cus.push(init_b);
+
+        let (state_a, _) = Pubkey::find_program_address(&[b"state", user.as_ref()], &pid_a);
+        let (vault_a, _) = Pubkey::find_program_address(&[b"vault", state_a.as_ref()], &pid_a);
+        let init_a = send(&mut svm, &payer, Instruction {
+            program_id: pid_a,
+            accounts: anchor_vault_rc::accounts::Initialize { user, state: state_a, vault: vault_a, system_program }.to_account_metas(None),
+            data: anchor_vault_rc::instruction::Initialize {}.data(),
+        });
+        init_a_cus.push(init_a);
+
+        for i in 0..N_PAIRS {
+            // unique amounts per iter so per-user signatures differ
+            let dep_amt = DEPOSIT_AMOUNT + i as u64;
+            let wd_amt = WITHDRAW_AMOUNT + i as u64;
+
+            let dep_b = send(&mut svm, &payer, Instruction {
+                program_id: pid_b,
+                accounts: anchor_vault::accounts::Deposit { user, state: state_b, vault: vault_b, system_program }.to_account_metas(None),
+                data: anchor_vault::instruction::Deposit { amount: dep_amt }.data(),
+            });
+            let wd_b = send(&mut svm, &payer, Instruction {
+                program_id: pid_b,
+                accounts: anchor_vault::accounts::Withdraw { user, state: state_b, vault: vault_b, system_program }.to_account_metas(None),
+                data: anchor_vault::instruction::Withdraw { amount: wd_amt }.data(),
+            });
+            per_call_b[2 * i].push(dep_b);
+            per_call_b[2 * i + 1].push(wd_b);
+
+            let dep_a = send(&mut svm, &payer, Instruction {
+                program_id: pid_a,
+                accounts: anchor_vault_rc::accounts::Deposit { user, state: state_a, vault: vault_a, system_program }.to_account_metas(None),
+                data: anchor_vault_rc::instruction::Deposit { amount: dep_amt }.data(),
+            });
+            let wd_a = send(&mut svm, &payer, Instruction {
+                program_id: pid_a,
+                accounts: anchor_vault_rc::accounts::Withdraw { user, state: state_a, vault: vault_a, system_program }.to_account_metas(None),
+                data: anchor_vault_rc::instruction::Withdraw { amount: wd_amt }.data(),
+            });
+            per_call_a[2 * i].push(dep_a);
+            per_call_a[2 * i + 1].push(wd_a);
+        }
+    }
+
+    let mean = |v: &[u64]| -> u64 { v.iter().sum::<u64>() / v.len() as u64 };
+    let mean_init_a = mean(&init_a_cus);
+    let mean_init_b = mean(&init_b_cus);
+    let mean_per_call_a: Vec<u64> = per_call_a.iter().map(|v| mean(v)).collect();
+    let mean_per_call_b: Vec<u64> = per_call_b.iter().map(|v| mean(v)).collect();
+
+    let rent = Rent::default();
+    let rent_b = rent.minimum_balance(8 + 2);
+    let rent_a = rent.minimum_balance(8);
+
+    println!("\n=== Crossover lifecycle (avg over {N_USERS} users, init + {N_PAIRS} × (dep+wd)) ===");
+    println!("  rent up-front:    A={rent_a}  B={rent_b}  (Δ={})", rent_b - rent_a);
+    println!("  mean init CU:     A={mean_init_a}  B={mean_init_b}");
+    println!("  mean amortizing CU per ix idx:");
+    for k in 0..n_amort {
+        let kind = if k % 2 == 0 { "dep" } else { "wd " };
+        println!("    [{k:>2}] {kind}  A={:<6}  B={:<6}  saved(A-B)={}", mean_per_call_a[k], mean_per_call_b[k], mean_per_call_a[k] as i64 - mean_per_call_b[k] as i64);
+    }
+
+    for lpcu in [1u64, 100, 10_000] {
+        println!("\n  --- lamports_per_CU = {lpcu} ---");
+        println!("  k | cum_cost_A (lamports) | cum_cost_B (lamports) |  B - A  | B cheaper?");
+        let mut cum_a: u64 = rent_a + mean_init_a * lpcu;
+        let mut cum_b: u64 = rent_b + mean_init_b * lpcu;
+        let mut crossover: Option<usize> = None;
+        for k in 0..n_amort {
+            cum_a += mean_per_call_a[k] * lpcu;
+            cum_b += mean_per_call_b[k] * lpcu;
+            let diff = cum_b as i64 - cum_a as i64;
+            let cheaper = diff < 0;
+            if cheaper && crossover.is_none() {
+                crossover = Some(k + 1);
+            }
+            println!(
+                "  {:>2} | {cum_a:>21} | {cum_b:>21} | {diff:>7} | {}",
+                k + 1,
+                if cheaper { "yes" } else { "no" }
+            );
+        }
+        match crossover {
+            Some(k) => println!("  -> Variant B cheaper from amortizing ix #{k} onward"),
+            None => println!("  -> Variant B never cheaper within {n_amort} ixs"),
+        }
+        if lpcu == 1 {
+            let k = crossover.expect("expected crossover within window at lpcu=1");
+            assert!(
+                (3..=8).contains(&k),
+                "empirical mean crossover {k} far from analytical ~5"
+            );
+        }
+    }
+}
