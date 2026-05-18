@@ -1,3 +1,13 @@
-target/
-node_modules/
+# rust build
+**/target/
+
+# javascript
+**/node_modules/
+**/dist/
+**/.next/
+
+**/app/
+
 id.json
+
+**/.surfpool

@@ -1,0 +1,46 @@
+{
+  "name": "@trib3/anchor-escrow-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the anchor-escrow Solana program",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "peerDependencies": {
+    "@solana/kit": "^6.8.0"
+  },
+  "dependencies": {
+    "@solana/program-client-core": "^6.9.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "escrow",
+    "sdk"
+  ]
+}
