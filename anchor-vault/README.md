@@ -2,7 +2,7 @@
 
 classwork for turbin3 q2 2026, tinkering around bumps, CU vs rents.
 
-![anchor-vault-1](anchor-vault-1.png)
+![anchor-vault](anchor-vault.png)
 
 two programs, same instructions, different bump strategy:
 
