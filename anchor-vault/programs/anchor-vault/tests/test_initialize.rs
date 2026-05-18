@@ -165,5 +165,5 @@ fn test_e2e() {
 
     assert!(user_balance_after_close > close_amount);
 
-    msg!("Vault Balance : {}", vault_balance_after_deposit);
+    msg!("User Balance : {}", user_balance_after_close);
 }
