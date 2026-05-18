@@ -3,7 +3,9 @@
 // users so bump-value distribution is sampled.
 
 use {
-    anchor_lang::{solana_program::instruction::Instruction, system_program, InstructionData, ToAccountMetas},
+    anchor_lang::{
+        solana_program::instruction::Instruction, system_program, InstructionData, ToAccountMetas,
+    },
     litesvm::LiteSVM,
     solana_keypair::Keypair,
     solana_message::Message,
@@ -31,7 +33,10 @@ fn summarize(name: &str, v: &[u64]) -> (u64, u64, u64) {
     let min = *v.iter().min().unwrap();
     let max = *v.iter().max().unwrap();
     let mean = v.iter().sum::<u64>() / v.len() as u64;
-    println!("  {name:<11}  min={min:<6}  mean={mean:<6}  max={max:<6}  n={}", v.len());
+    println!(
+        "  {name:<11}  min={min:<6}  mean={mean:<6}  max={max:<6}  n={}",
+        v.len()
+    );
     (min, mean, max)
 }
 
@@ -59,28 +64,58 @@ fn run_variant_b(svm: &mut LiteSVM, payer: &Keypair) -> (u64, u64, u64, u64, u8,
 
     let init_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault::accounts::Initialize { user, state, vault, system_program }.to_account_metas(None),
+        accounts: anchor_vault::accounts::Initialize {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
         data: anchor_vault::instruction::Initialize {}.data(),
     };
     let init_cu = send(svm, payer, init_ix);
 
     let dep_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault::accounts::Deposit { user, state, vault, system_program }.to_account_metas(None),
-        data: anchor_vault::instruction::Deposit { amount: DEPOSIT_AMOUNT }.data(),
+        accounts: anchor_vault::accounts::Deposit {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
+        data: anchor_vault::instruction::Deposit {
+            amount: DEPOSIT_AMOUNT,
+        }
+        .data(),
     };
     let dep_cu = send(svm, payer, dep_ix);
 
     let wd_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault::accounts::Withdraw { user, state, vault, system_program }.to_account_metas(None),
-        data: anchor_vault::instruction::Withdraw { amount: WITHDRAW_AMOUNT }.data(),
+        accounts: anchor_vault::accounts::Withdraw {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
+        data: anchor_vault::instruction::Withdraw {
+            amount: WITHDRAW_AMOUNT,
+        }
+        .data(),
     };
     let wd_cu = send(svm, payer, wd_ix);
 
     let cl_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault::accounts::Close { user, state, vault, system_program }.to_account_metas(None),
+        accounts: anchor_vault::accounts::Close {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
         data: anchor_vault::instruction::Close {}.data(),
     };
     let cl_cu = send(svm, payer, cl_ix);
@@ -97,28 +132,58 @@ fn run_variant_a(svm: &mut LiteSVM, payer: &Keypair) -> (u64, u64, u64, u64, u8,
 
     let init_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault_rc::accounts::Initialize { user, state, vault, system_program }.to_account_metas(None),
+        accounts: anchor_vault_rc::accounts::Initialize {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
         data: anchor_vault_rc::instruction::Initialize {}.data(),
     };
     let init_cu = send(svm, payer, init_ix);
 
     let dep_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault_rc::accounts::Deposit { user, state, vault, system_program }.to_account_metas(None),
-        data: anchor_vault_rc::instruction::Deposit { amount: DEPOSIT_AMOUNT }.data(),
+        accounts: anchor_vault_rc::accounts::Deposit {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
+        data: anchor_vault_rc::instruction::Deposit {
+            amount: DEPOSIT_AMOUNT,
+        }
+        .data(),
     };
     let dep_cu = send(svm, payer, dep_ix);
 
     let wd_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault_rc::accounts::Withdraw { user, state, vault, system_program }.to_account_metas(None),
-        data: anchor_vault_rc::instruction::Withdraw { amount: WITHDRAW_AMOUNT }.data(),
+        accounts: anchor_vault_rc::accounts::Withdraw {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
+        data: anchor_vault_rc::instruction::Withdraw {
+            amount: WITHDRAW_AMOUNT,
+        }
+        .data(),
     };
     let wd_cu = send(svm, payer, wd_ix);
 
     let cl_ix = Instruction {
         program_id: pid,
-        accounts: anchor_vault_rc::accounts::Close { user, state, vault, system_program }.to_account_metas(None),
+        accounts: anchor_vault_rc::accounts::Close {
+            user,
+            state,
+            vault,
+            system_program,
+        }
+        .to_account_metas(None),
         data: anchor_vault_rc::instruction::Close {}.data(),
     };
     let cl_cu = send(svm, payer, cl_ix);
@@ -162,24 +227,32 @@ fn bench_stored_vs_recompute() {
     }
 
     println!("\n=== bump distribution (variant B program-id) ===");
-    println!("  state_bump min={} max={} mean={}",
+    println!(
+        "  state_bump min={} max={} mean={}",
         b.state_bump.iter().min().unwrap(),
         b.state_bump.iter().max().unwrap(),
-        b.state_bump.iter().map(|&x| x as u64).sum::<u64>() / b.state_bump.len() as u64);
-    println!("  vault_bump min={} max={} mean={}",
+        b.state_bump.iter().map(|&x| x as u64).sum::<u64>() / b.state_bump.len() as u64
+    );
+    println!(
+        "  vault_bump min={} max={} mean={}",
         b.vault_bump.iter().min().unwrap(),
         b.vault_bump.iter().max().unwrap(),
-        b.vault_bump.iter().map(|&x| x as u64).sum::<u64>() / b.vault_bump.len() as u64);
+        b.vault_bump.iter().map(|&x| x as u64).sum::<u64>() / b.vault_bump.len() as u64
+    );
 
     println!("\n=== bump distribution (variant A program-id) ===");
-    println!("  state_bump min={} max={} mean={}",
+    println!(
+        "  state_bump min={} max={} mean={}",
         a.state_bump.iter().min().unwrap(),
         a.state_bump.iter().max().unwrap(),
-        a.state_bump.iter().map(|&x| x as u64).sum::<u64>() / a.state_bump.len() as u64);
-    println!("  vault_bump min={} max={} mean={}",
+        a.state_bump.iter().map(|&x| x as u64).sum::<u64>() / a.state_bump.len() as u64
+    );
+    println!(
+        "  vault_bump min={} max={} mean={}",
         a.vault_bump.iter().min().unwrap(),
         a.vault_bump.iter().max().unwrap(),
-        a.vault_bump.iter().map(|&x| x as u64).sum::<u64>() / a.vault_bump.len() as u64);
+        a.vault_bump.iter().map(|&x| x as u64).sum::<u64>() / a.vault_bump.len() as u64
+    );
 
     println!("\n=== Variant B (stored bump) CU ===");
     let b_init = summarize("initialize", &b.initialize);
@@ -247,7 +320,11 @@ fn bench_stored_vs_recompute() {
     println!("|------------|------------|-------------|--------------|-----------|----------|-------------|------------------------|-------------|-------------------|");
     let row = |ix: &str, a_mean: u64, b_mean: u64| {
         let saved = a_mean as i64 - b_mean as i64;
-        let calls_1 = if saved > 0 { ((extra_rent as u64).div_ceil(saved as u64)).to_string() } else { "n/a".into() };
+        let calls_1 = if saved > 0 {
+            ((extra_rent as u64).div_ceil(saved as u64)).to_string()
+        } else {
+            "n/a".into()
+        };
         println!(
             "| {ix:<10} | state+vault | yes (Var B) | {a_mean:<12} | {b_mean:<9} | {saved:<8} | {extra_bytes:<11} | {extra_rent:<22} | 1           | {calls_1} |"
         );

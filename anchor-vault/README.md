@@ -1,6 +1,6 @@
 # anchor vault — stored vs recomputed PDA bump
 
-![anchor-vault](anchor-vault.png)
+![anchor-vault-1](anchor-vault-1.png)
 
 classwork for turbin3 q2 2026, tinkering around bumps, CU vs rents.
 
