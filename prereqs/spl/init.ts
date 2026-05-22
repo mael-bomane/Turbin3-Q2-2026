@@ -1,8 +1,8 @@
 import {
   appendTransactionMessageInstructions,
   assertIsTransactionWithBlockhashLifetime,
+  createKeyPairSignerFromBytes,
   createTransactionMessage,
-  generateKeyPairSigner,
   getSignatureFromTransaction,
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
@@ -16,12 +16,13 @@ import {
 import { rpc } from "../../prereqs/helpers/rpc";
 import { sendAndConfirm, signerPromise } from "../../prereqs/helpers/wallet";
 import { getCreateAccountInstruction } from "@solana-program/system";
+import vanity from "../../vanity.json";
 
 (async () => {
   try {
     const signer = await signerPromise;
 
-    const mint = await generateKeyPairSigner();
+    const mint = await createKeyPairSignerFromBytes(new Uint8Array(vanity));
 
     const space = BigInt(getMintSize());
 
@@ -71,3 +72,4 @@ import { getCreateAccountInstruction } from "@solana-program/system";
 })();
 
 // AE1iquKa5BQydPUDLRNsvbEpm7PDEoBJvGtPVa1qZwqM
+// TrxzN5MPyhVBJZ65UYpnTPA4mwrW2Uo9KgELu1mz9dc

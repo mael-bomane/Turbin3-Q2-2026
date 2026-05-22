@@ -6,8 +6,9 @@
 **/dist/
 **/.next/
 
-**/app/
-
 id.json
+vanity.json
 
 **/.surfpool
+
+frontend

@@ -23,9 +23,9 @@ umi.use(signerIdentity(signer));
 
     //change the metadata
     const data: DataV2Args = {
-      name: "Hormuz Coin",
-      symbol: "HMZ",
-      uri: "https://arweave.net/123456",
+      name: "TRIB3 COIN",
+      symbol: "TRIB3",
+      uri: "https://raw.githubusercontent.com/mael-bomane/Turbin3-Q2-2026/main/prereqs/spl/metadata.json",
       sellerFeeBasisPoints: 1,
       creators: null,
       collection: null,

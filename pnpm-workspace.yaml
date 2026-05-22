@@ -1,3 +1,7 @@
 packages:
   - "anchor-vault"
   - "anchor-escrow"
+  - "anchor-escrow/sdk"
+  - "anchor-amm"
+  - "anchor-amm/sdk"
+  - "frontend"

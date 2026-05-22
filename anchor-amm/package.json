@@ -1,5 +1,5 @@
 {
-  "name": "@trib3/anchor-escrow",
+  "name": "@trib3/anchor-amm",
   "private": true,
   "license": "ISC",
   "scripts": {
@@ -7,7 +7,7 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "sdk:clean": "rm -rf sdk/src/generated sdk/dist",
     "sdk:gen": "node codama.mjs",
-    "sdk:dist": "pnpm --filter @trib3/anchor-escrow-sdk build",
+    "sdk:dist": "pnpm --filter @trib3/anchor-amm-sdk build",
     "sdk:build": "anchor build && pnpm run sdk:gen && pnpm run sdk:dist",
     "sdk:regen": "pnpm run sdk:clean && pnpm run sdk:build",
     "deploy:devnet": "bash scripts/deploy-devnet.sh"

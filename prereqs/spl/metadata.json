@@ -1,0 +1,17 @@
+{
+  "name": "Trib3 Coin",
+  "symbol": "TRIB3",
+  "description": "Turbin3 Q2 2026 cohort token.",
+  "image": "https://raw.githubusercontent.com/mael-bomane/Turbin3-Q2-2026/main/prereqs/spl/image.png",
+  "external_url": "https://github.com/mael-bomane/Turbin3-Q2-2026",
+  "attributes": [],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://raw.githubusercontent.com/mael-bomane/Turbin3-Q2-2026/main/prereqs/spl/image.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image"
+  }
+}
