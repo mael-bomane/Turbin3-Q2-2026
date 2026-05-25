@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{mint_to, transfer, Mint, MintTo, Token, TokenAccount, Transfer},
+    token::{mint_to, transfer_checked, Mint, MintTo, Token, TokenAccount, TransferChecked},
 };
-use constant_product_curve::{ConstantProduct, CurveError, XYAmounts};
+use constant_product_curve::{ConstantProduct, XYAmounts};
 
 use crate::{error::AmmError, state::Config};
 
@@ -107,28 +107,33 @@ impl<'info> Deposit<'info> {
     }
 
     pub fn deposit_tokens(&self, is_x: bool, amount: u64) -> Result<()> {
-        let (from, to) = match is_x {
+        let (from, to, mint, decimals) = match is_x {
             true => (
                 self.user_x.to_account_info(),
                 self.vault_x.to_account_info(),
+                self.mint_x.to_account_info(),
+                self.mint_x.decimals,
             ),
             false => (
                 self.user_y.to_account_info(),
                 self.vault_y.to_account_info(),
+                self.mint_y.to_account_info(),
+                self.mint_y.decimals,
             ),
         };
 
         let cpi_program = self.token_program.key();
 
-        let cpi_accounts = Transfer {
+        let cpi_accounts = TransferChecked {
             from,
+            mint,
             to,
             authority: self.user.to_account_info(),
         };
 
         let ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        transfer(ctx, amount)
+        transfer_checked(ctx, amount, decimals)
     }
 
     pub fn mint_lp_tokens(&self, amount: u64) -> Result<()> {

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{burn, transfer, Burn, Mint, Token, TokenAccount, Transfer},
+    token::{burn, transfer_checked, Burn, Mint, Token, TokenAccount, TransferChecked},
 };
 use constant_product_curve::{ConstantProduct, XYAmounts};
 
@@ -89,22 +89,27 @@ impl<'info> Withdraw<'info> {
     }
 
     pub fn withdraw_tokens(&self, is_x: bool, amount: u64) -> Result<()> {
-        let (from, to) = match is_x {
+        let (from, to, mint, decimals) = match is_x {
             true => (
                 self.vault_x.to_account_info(),
                 self.user_x.to_account_info(),
+                self.mint_x.to_account_info(),
+                self.mint_x.decimals,
             ),
             false => (
                 self.vault_y.to_account_info(),
                 self.user_y.to_account_info(),
+                self.mint_y.to_account_info(),
+                self.mint_y.decimals,
             ),
         };
 
-        transfer(
+        transfer_checked(
             CpiContext::new_with_signer(
                 self.token_program.key(),
-                Transfer {
+                TransferChecked {
                     from,
+                    mint,
                     to,
                     authority: self.config.to_account_info(),
                 },
@@ -115,6 +120,7 @@ impl<'info> Withdraw<'info> {
                 ]],
             ),
             amount,
+            decimals,
         )
     }
 

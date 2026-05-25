@@ -16,6 +16,8 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
   SolanaError,
   transformEncoder,
@@ -110,13 +112,19 @@ export type TakeInstruction<
     ]
   >;
 
-export type TakeInstructionData = { discriminator: ReadonlyUint8Array };
+export type TakeInstructionData = {
+  discriminator: ReadonlyUint8Array;
+  amountARequested: bigint;
+};
 
-export type TakeInstructionDataArgs = {};
+export type TakeInstructionDataArgs = { amountARequested: number | bigint };
 
 export function getTakeInstructionDataEncoder(): FixedSizeEncoder<TakeInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 1)]]),
+    getStructEncoder([
+      ["discriminator", fixEncoderSize(getBytesEncoder(), 1)],
+      ["amountARequested", getU64Encoder()],
+    ]),
     (value) => ({ ...value, discriminator: TAKE_DISCRIMINATOR }),
   );
 }
@@ -124,6 +132,7 @@ export function getTakeInstructionDataEncoder(): FixedSizeEncoder<TakeInstructio
 export function getTakeInstructionDataDecoder(): FixedSizeDecoder<TakeInstructionData> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 1)],
+    ["amountARequested", getU64Decoder()],
   ]);
 }
 
@@ -163,6 +172,7 @@ export type TakeAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  amountARequested: TakeInstructionDataArgs["amountARequested"];
 };
 
 export async function getTakeInstructionAsync<
@@ -238,6 +248,9 @@ export async function getTakeInstructionAsync<
     keyof typeof originalAccounts,
     ResolvedInstructionAccount
   >;
+
+  // Original args.
+  const args = { ...input };
 
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
@@ -373,7 +386,9 @@ export async function getTakeInstructionAsync<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
     ],
-    data: getTakeInstructionDataEncoder().encode({}),
+    data: getTakeInstructionDataEncoder().encode(
+      args as TakeInstructionDataArgs,
+    ),
     programAddress,
   } as TakeInstruction<
     TProgramAddress,
@@ -418,6 +433,7 @@ export type TakeInput<
   systemProgram?: Address<TAccountSystemProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
+  amountARequested: TakeInstructionDataArgs["amountARequested"];
 };
 
 export function getTakeInstruction<
@@ -492,6 +508,9 @@ export function getTakeInstruction<
     ResolvedInstructionAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -522,7 +541,9 @@ export function getTakeInstruction<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
     ],
-    data: getTakeInstructionDataEncoder().encode({}),
+    data: getTakeInstructionDataEncoder().encode(
+      args as TakeInstructionDataArgs,
+    ),
     programAddress,
   } as TakeInstruction<
     TProgramAddress,

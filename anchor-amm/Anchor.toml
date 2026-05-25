@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 anchor_amm = "7f96rDy6EdQzb5PbNbgWeYFfSnioRjFekrk2iah6ufzL"
 
+[programs.devnet]
+anchor_amm = "7f96rDy6EdQzb5PbNbgWeYFfSnioRjFekrk2iah6ufzL"
+
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"

@@ -2,7 +2,11 @@
 
 ![anchor-escrow](anchor-escrow.png)
 
-classwork for turbin3 q2 2026, tinkering around codama & marketplace
+classwork for turbin3 q2 2026, tinkering around codama.
+
+## updates
+
+- now supports partial take
 
 ## project layout
 

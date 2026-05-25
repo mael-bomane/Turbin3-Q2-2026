@@ -14,15 +14,24 @@ import {
 } from "@solana/kit";
 import { ANCHOR_ESCROW_PROGRAM_ADDRESS } from "../programs";
 
-/** CustomError: Custom error message */
-export const ANCHOR_ESCROW_ERROR__CUSTOM_ERROR = 0x1770; // 6000
+/** ZeroAmount: Requested amount must be greater than zero */
+export const ANCHOR_ESCROW_ERROR__ZERO_AMOUNT = 0x1770; // 6000
+/** InsufficientRemaining: Requested amount exceeds remaining escrow balance */
+export const ANCHOR_ESCROW_ERROR__INSUFFICIENT_REMAINING = 0x1771; // 6001
+/** MathOverflow: Arithmetic overflow */
+export const ANCHOR_ESCROW_ERROR__MATH_OVERFLOW = 0x1772; // 6002
 
-export type AnchorEscrowError = typeof ANCHOR_ESCROW_ERROR__CUSTOM_ERROR;
+export type AnchorEscrowError =
+  | typeof ANCHOR_ESCROW_ERROR__INSUFFICIENT_REMAINING
+  | typeof ANCHOR_ESCROW_ERROR__MATH_OVERFLOW
+  | typeof ANCHOR_ESCROW_ERROR__ZERO_AMOUNT;
 
 let anchorEscrowErrorMessages: Record<AnchorEscrowError, string> | undefined;
 if (process.env["NODE_ENV"] !== "production") {
   anchorEscrowErrorMessages = {
-    [ANCHOR_ESCROW_ERROR__CUSTOM_ERROR]: `Custom error message`,
+    [ANCHOR_ESCROW_ERROR__INSUFFICIENT_REMAINING]: `Requested amount exceeds remaining escrow balance`,
+    [ANCHOR_ESCROW_ERROR__MATH_OVERFLOW]: `Arithmetic overflow`,
+    [ANCHOR_ESCROW_ERROR__ZERO_AMOUNT]: `Requested amount must be greater than zero`,
   };
 }
 

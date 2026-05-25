@@ -28,6 +28,7 @@ import {
 import { getCreateAccountInstruction } from "@solana-program/system";
 import {
   TOKEN_PROGRAM_ADDRESS,
+  fetchToken,
   findAssociatedTokenPda,
   getCreateAssociatedTokenIdempotentInstructionAsync,
   getInitializeMintInstruction,
@@ -46,8 +47,10 @@ import {
 const RPC_URL = "http://127.0.0.1:8899";
 const WS_URL = "ws://127.0.0.1:8900";
 const DECIMALS = 6;
-const AMOUNT_A = 1_000_000n; // 1 token of mintA
-const AMOUNT_B = 2_000_000n; // 2 tokens of mintB
+const AMOUNT_A = 1_000_000n;
+const AMOUNT_B = 2_000_000n;
+const PARTIAL_A = 400_000n; // 40% of AMOUNT_A
+const PARTIAL_B_DUE = (PARTIAL_A * AMOUNT_B + AMOUNT_A - 1n) / AMOUNT_A; // ceil(req * b / a) = 800_000
 
 function loadWalletSigner(): Promise<KeyPairSigner> {
   const path = join(homedir(), ".config/solana/id.json");
@@ -156,9 +159,7 @@ describe("anchor-escrow (codama SDK)", () => {
     mintA = await createMint(rpc, sendAndConfirm, payer, maker.address);
     mintB = await createMint(rpc, sendAndConfirm, payer, maker.address);
 
-    // maker funded with mintA (will be deposited into vault)
     await createAtaAndMint(rpc, sendAndConfirm, payer, maker, mintA, maker.address, AMOUNT_A);
-    // taker funded with mintB (will be sent to maker on take)
     await createAtaAndMint(rpc, sendAndConfirm, payer, maker, mintB, taker.address, AMOUNT_B);
   });
 
@@ -184,20 +185,74 @@ describe("anchor-escrow (codama SDK)", () => {
     expect(account.data.amountB).to.equal(AMOUNT_B);
   });
 
-  it("take: taker swaps mintB for mintA, escrow closes", async () => {
+  it("take (partial): decrements remaining, escrow stays open", async () => {
+    const [escrowPda] = await findEscrowPda({ maker: maker.address, seed });
+    const [takerAtaA] = await findAssociatedTokenPda({
+      owner: taker.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      mint: mintA,
+    });
+    const [makerAtaB] = await findAssociatedTokenPda({
+      owner: maker.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      mint: mintB,
+    });
+
     const ix = await getTakeInstructionAsync({
       taker,
       maker: maker.address,
       mintA,
       mintB,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
-      escrow: (await findEscrowPda({ maker: maker.address, seed }))[0],
+      escrow: escrowPda,
+      amountARequested: PARTIAL_A,
     });
     await send(rpc, sendAndConfirm, taker, [ix]);
 
+    const escrow = await fetchEscrow(rpc, escrowPda);
+    expect(escrow.data.amountA).to.equal(AMOUNT_A - PARTIAL_A);
+    expect(escrow.data.amountB).to.equal(AMOUNT_B - PARTIAL_B_DUE);
+
+    const takerA = await fetchToken(rpc, takerAtaA);
+    expect(takerA.data.amount).to.equal(PARTIAL_A);
+
+    const makerB = await fetchToken(rpc, makerAtaB);
+    expect(makerB.data.amount).to.equal(PARTIAL_B_DUE);
+  });
+
+  it("take (final): drains remaining, escrow closes", async () => {
     const [escrowPda] = await findEscrowPda({ maker: maker.address, seed });
+    const [takerAtaA] = await findAssociatedTokenPda({
+      owner: taker.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      mint: mintA,
+    });
+    const [makerAtaB] = await findAssociatedTokenPda({
+      owner: maker.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      mint: mintB,
+    });
+
+    const remainingA = AMOUNT_A - PARTIAL_A;
+    const ix = await getTakeInstructionAsync({
+      taker,
+      maker: maker.address,
+      mintA,
+      mintB,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      escrow: escrowPda,
+      amountARequested: remainingA,
+    });
+    await send(rpc, sendAndConfirm, taker, [ix]);
+
     const info = await rpc.getAccountInfo(escrowPda).send();
     expect(info.value).to.equal(null);
+
+    const takerA = await fetchToken(rpc, takerAtaA);
+    expect(takerA.data.amount).to.equal(AMOUNT_A);
+
+    const makerB = await fetchToken(rpc, makerAtaB);
+    expect(makerB.data.amount).to.equal(AMOUNT_B);
   });
 
   it("refund: maker reclaims vault (fresh escrow)", async () => {
@@ -211,7 +266,6 @@ describe("anchor-escrow (codama SDK)", () => {
       amountB: AMOUNT_B,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    // top up maker's mintA ATA so make has tokens to deposit
     await createAtaAndMint(rpc, sendAndConfirm, maker, maker, mintA, maker.address, AMOUNT_A);
     await send(rpc, sendAndConfirm, maker, [makeIx]);
 

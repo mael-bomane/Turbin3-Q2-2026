@@ -10,7 +10,7 @@ import bs58 from "bs58";
 
 import { umi, signer } from "../helpers/umi";
 
-const mint = publicKey("AE1iquKa5BQydPUDLRNsvbEpm7PDEoBJvGtPVa1qZwqM");
+const mint = publicKey("TrxzN5MPyhVBJZ65UYpnTPA4mwrW2Uo9KgELu1mz9dc");
 
 umi.use(signerIdentity(signer));
 

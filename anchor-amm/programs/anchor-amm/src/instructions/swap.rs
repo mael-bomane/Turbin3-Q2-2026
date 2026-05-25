@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{transfer, Mint, Token, TokenAccount, Transfer},
+    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
 };
 use constant_product_curve::{ConstantProduct, LiquidityPair};
 
@@ -76,51 +76,62 @@ impl<'info> Swap<'info> {
             .map_err(|_| AmmError::SlippageExceeded)?;
 
         self.deposit_tokens(is_x, swap_result.deposit)?;
-        self.withdraw_tokens(is_x, swap_result.withdraw)
+        self.withdraw_tokens(!is_x, swap_result.withdraw)
     }
 
     pub fn deposit_tokens(&mut self, is_x: bool, amount: u64) -> Result<()> {
-        let (from, to) = match is_x {
+        let (from, to, mint, decimals) = match is_x {
             true => (
                 self.user_x.to_account_info(),
                 self.vault_x.to_account_info(),
+                self.mint_x.to_account_info(),
+                self.mint_x.decimals,
             ),
             false => (
                 self.user_y.to_account_info(),
                 self.vault_y.to_account_info(),
+                self.mint_y.to_account_info(),
+                self.mint_y.decimals,
             ),
         };
 
-        transfer(
+        transfer_checked(
             CpiContext::new(
                 self.token_program.key(),
-                Transfer {
+                TransferChecked {
                     from,
+                    mint,
                     to,
                     authority: self.user.to_account_info(),
                 },
             ),
             amount,
+            decimals,
         )
     }
 
     pub fn withdraw_tokens(&mut self, is_x: bool, amount: u64) -> Result<()> {
-        let (from, to) = match is_x {
+        let (from, to, mint, decimals) = match is_x {
             true => (
-                self.vault_y.to_account_info(),
-                self.user_y.to_account_info(),
-            ),
-            false => (
                 self.vault_x.to_account_info(),
                 self.user_x.to_account_info(),
+                self.mint_x.to_account_info(),
+                self.mint_x.decimals,
+            ),
+            false => (
+                self.vault_y.to_account_info(),
+                self.user_y.to_account_info(),
+                self.mint_y.to_account_info(),
+                self.mint_y.decimals,
             ),
         };
 
-        transfer(
+        transfer_checked(
             CpiContext::new_with_signer(
                 self.token_program.key(),
-                Transfer {
+                TransferChecked {
                     from,
+                    mint,
                     to,
                     authority: self.config.to_account_info(),
                 },
@@ -131,6 +142,7 @@ impl<'info> Swap<'info> {
                 ]],
             ),
             amount,
+            decimals,
         )
     }
 }

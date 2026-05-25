@@ -24,7 +24,7 @@ import { rpc, rpcSubscriptions } from "../helpers/rpc";
 const token_decimals = 1_000_000n;
 
 //paste your mint address got from spl_init.ts
-const mint = address("AE1iquKa5BQydPUDLRNsvbEpm7PDEoBJvGtPVa1qZwqM");
+const mint = address("TrxzN5MPyhVBJZ65UYpnTPA4mwrW2Uo9KgELu1mz9dc");
 
 (async () => {
   try {
@@ -47,7 +47,7 @@ const mint = address("AE1iquKa5BQydPUDLRNsvbEpm7PDEoBJvGtPVa1qZwqM");
       mint,
       token: ata,
       mintAuthority: signer,
-      amount: 1n * token_decimals,
+      amount: 4_206_942_069n * token_decimals,
     });
 
     const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
