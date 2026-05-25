@@ -5,7 +5,11 @@ use anchor_spl::{
 };
 use constant_product_curve::{ConstantProduct, LiquidityPair};
 
-use crate::{error::AmmError, state::Config};
+use crate::{
+    constants::{ANALYTICS_SEED, WSOL_MINT},
+    error::AmmError,
+    state::{Analytics, Config},
+};
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
@@ -14,12 +18,19 @@ pub struct Swap<'info> {
     pub mint_x: Box<Account<'info, Mint>>,
     pub mint_y: Box<Account<'info, Mint>>,
     #[account(
+        mut,
         has_one = mint_x,
         has_one = mint_y,
         seeds = [b"config", config.seed.to_le_bytes().as_ref()],
         bump = config.config_bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
+    #[account(
+        mut,
+        seeds = [ANALYTICS_SEED],
+        bump = analytics.bump,
+    )]
+    pub analytics: Box<Account<'info, Analytics>>,
     #[account(
         seeds = [b"lp", config.key().as_ref()],
         bump = config.lp_bump,
@@ -56,6 +67,7 @@ pub struct Swap<'info> {
 
 impl<'info> Swap<'info> {
     pub fn swap(&mut self, is_x: bool, amount: u64, min: u64) -> Result<()> {
+        require!(!self.config.locked, AmmError::PoolLocked);
         require!(amount > 0, AmmError::InvalidAmount);
         let mut curve: ConstantProduct = ConstantProduct::init(
             self.vault_x.amount,
@@ -76,7 +88,54 @@ impl<'info> Swap<'info> {
             .map_err(|_| AmmError::SlippageExceeded)?;
 
         self.deposit_tokens(is_x, swap_result.deposit)?;
-        self.withdraw_tokens(!is_x, swap_result.withdraw)
+        self.withdraw_tokens(!is_x, swap_result.withdraw)?;
+
+        self.update_analytics(is_x, swap_result.deposit, swap_result.withdraw)
+    }
+
+    fn update_analytics(&mut self, is_x: bool, deposit: u64, withdraw: u64) -> Result<()> {
+        let wsol_is_x = self.mint_x.key() == WSOL_MINT;
+        let wsol_is_y = self.mint_y.key() == WSOL_MINT;
+
+        if wsol_is_x || wsol_is_y {
+            // WSOL leg flow: amount on the WSOL side, regardless of direction.
+            let (wsol_flow, tvl_add, tvl_sub) = match (wsol_is_x, is_x) {
+                (true, true) => (deposit, deposit, 0u64),    // user deposits WSOL (=X)
+                (true, false) => (withdraw, 0u64, withdraw), // user withdraws WSOL (=X)
+                (false, true) => (withdraw, 0u64, withdraw), // user withdraws WSOL (=Y)
+                (false, false) => (deposit, deposit, 0u64),  // user deposits WSOL (=Y)
+            };
+
+            self.analytics.volume_wsol = self
+                .analytics
+                .volume_wsol
+                .checked_add(wsol_flow)
+                .ok_or(AmmError::Overflow)?;
+            self.analytics.tvl_wsol = self
+                .analytics
+                .tvl_wsol
+                .checked_add(tvl_add)
+                .ok_or(AmmError::Overflow)?
+                .checked_sub(tvl_sub)
+                .ok_or(AmmError::Underflow)?;
+        }
+
+        self.analytics.swaps = self
+            .analytics
+            .swaps
+            .checked_add(1)
+            .ok_or(AmmError::Overflow)?;
+
+        if !self.config.activated {
+            self.config.activated = true;
+            self.analytics.active_pairs = self
+                .analytics
+                .active_pairs
+                .checked_add(1)
+                .ok_or(AmmError::Overflow)?;
+        }
+
+        Ok(())
     }
 
     pub fn deposit_tokens(&mut self, is_x: bool, amount: u64) -> Result<()> {

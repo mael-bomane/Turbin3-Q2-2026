@@ -5,27 +5,37 @@ use anchor_spl::{
 };
 use constant_product_curve::{ConstantProduct, XYAmounts};
 
-use crate::{error::AmmError, state::Config};
+use crate::{
+    constants::{ANALYTICS_SEED, WSOL_MINT},
+    error::AmmError,
+    state::{Analytics, Config},
+};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    pub mint_x: Account<'info, Mint>,
-    pub mint_y: Account<'info, Mint>,
+    pub mint_x: Box<Account<'info, Mint>>,
+    pub mint_y: Box<Account<'info, Mint>>,
     #[account(
         has_one = mint_x,
         has_one = mint_y,
         seeds = [b"config", config.seed.to_le_bytes().as_ref()],
         bump = config.config_bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
+    #[account(
+        mut,
+        seeds = [ANALYTICS_SEED],
+        bump = analytics.bump,
+    )]
+    pub analytics: Box<Account<'info, Analytics>>,
     #[account(
         mut,
         seeds = [b"lp", config.key().as_ref()],
         bump = config.lp_bump,
     )]
-    pub mint_lp: Account<'info, Mint>,
+    pub mint_lp: Box<Account<'info, Mint>>,
     #[account(
         mut,
         associated_token::mint = mint_x,
@@ -58,7 +68,7 @@ pub struct Deposit<'info> {
         associated_token::mint = mint_lp,
         associated_token::authority = user,
     )]
-    pub user_lp: Account<'info, TokenAccount>,
+    pub user_lp: Box<Account<'info, TokenAccount>>,
 
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
@@ -102,6 +112,21 @@ impl<'info> Deposit<'info> {
         self.deposit_tokens(false, y)?;
         // mint lp tokens
         self.mint_lp_tokens(amount)?;
+
+        let wsol_add = if self.mint_x.key() == WSOL_MINT {
+            x
+        } else if self.mint_y.key() == WSOL_MINT {
+            y
+        } else {
+            0
+        };
+        if wsol_add > 0 {
+            self.analytics.tvl_wsol = self
+                .analytics
+                .tvl_wsol
+                .checked_add(wsol_add)
+                .ok_or(AmmError::Overflow)?;
+        }
 
         Ok(())
     }

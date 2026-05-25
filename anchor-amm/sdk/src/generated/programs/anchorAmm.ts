@@ -33,31 +33,55 @@ import {
   type SelfFetchFunctions,
   type SelfPlanAndSendFunctions,
 } from "@solana/program-client-core";
-import { getConfigCodec, type Config, type ConfigArgs } from "../accounts";
+import {
+  getAnalyticsCodec,
+  getConfigCodec,
+  type Analytics,
+  type AnalyticsArgs,
+  type Config,
+  type ConfigArgs,
+} from "../accounts";
 import {
   getDepositInstructionAsync,
+  getInitializeAnalyticsInstructionAsync,
   getInitializeInstructionAsync,
+  getLockInstructionAsync,
+  getSetAdminInstructionAsync,
   getSwapInstructionAsync,
+  getUnlockInstructionAsync,
   getWithdrawInstructionAsync,
   parseDepositInstruction,
+  parseInitializeAnalyticsInstruction,
   parseInitializeInstruction,
+  parseLockInstruction,
+  parseSetAdminInstruction,
   parseSwapInstruction,
+  parseUnlockInstruction,
   parseWithdrawInstruction,
   type DepositAsyncInput,
+  type InitializeAnalyticsAsyncInput,
   type InitializeAsyncInput,
+  type LockAsyncInput,
   type ParsedDepositInstruction,
+  type ParsedInitializeAnalyticsInstruction,
   type ParsedInitializeInstruction,
+  type ParsedLockInstruction,
+  type ParsedSetAdminInstruction,
   type ParsedSwapInstruction,
+  type ParsedUnlockInstruction,
   type ParsedWithdrawInstruction,
+  type SetAdminAsyncInput,
   type SwapAsyncInput,
+  type UnlockAsyncInput,
   type WithdrawAsyncInput,
 } from "../instructions";
-import { findConfigPda, findMintLpPda } from "../pdas";
+import { findAnalyticsPda, findConfigPda, findMintLpPda } from "../pdas";
 
 export const ANCHOR_AMM_PROGRAM_ADDRESS =
   "7f96rDy6EdQzb5PbNbgWeYFfSnioRjFekrk2iah6ufzL" as Address<"7f96rDy6EdQzb5PbNbgWeYFfSnioRjFekrk2iah6ufzL">;
 
 export enum AnchorAmmAccount {
+  Analytics,
   Config,
 }
 
@@ -65,6 +89,17 @@ export function identifyAnchorAmmAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): AnchorAmmAccount {
   const data = "data" in account ? account.data : account;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([135, 28, 189, 27, 51, 143, 253, 88]),
+      ),
+      0,
+    )
+  ) {
+    return AnchorAmmAccount.Analytics;
+  }
   if (
     containsBytes(
       data,
@@ -85,7 +120,11 @@ export function identifyAnchorAmmAccount(
 export enum AnchorAmmInstruction {
   Deposit,
   Initialize,
+  InitializeAnalytics,
+  Lock,
+  SetAdmin,
   Swap,
+  Unlock,
   Withdraw,
 }
 
@@ -119,12 +158,56 @@ export function identifyAnchorAmmInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([39, 6, 0, 253, 143, 16, 81, 194]),
+      ),
+      0,
+    )
+  ) {
+    return AnchorAmmInstruction.InitializeAnalytics;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([21, 19, 208, 43, 237, 62, 255, 87]),
+      ),
+      0,
+    )
+  ) {
+    return AnchorAmmInstruction.Lock;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([251, 163, 0, 52, 91, 194, 187, 92]),
+      ),
+      0,
+    )
+  ) {
+    return AnchorAmmInstruction.SetAdmin;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([248, 198, 158, 145, 225, 117, 135, 200]),
       ),
       0,
     )
   ) {
     return AnchorAmmInstruction.Swap;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([101, 155, 40, 21, 158, 189, 56, 203]),
+      ),
+      0,
+    )
+  ) {
+    return AnchorAmmInstruction.Unlock;
   }
   if (
     containsBytes(
@@ -153,8 +236,20 @@ export type ParsedAnchorAmmInstruction<
       instructionType: AnchorAmmInstruction.Initialize;
     } & ParsedInitializeInstruction<TProgram>)
   | ({
+      instructionType: AnchorAmmInstruction.InitializeAnalytics;
+    } & ParsedInitializeAnalyticsInstruction<TProgram>)
+  | ({
+      instructionType: AnchorAmmInstruction.Lock;
+    } & ParsedLockInstruction<TProgram>)
+  | ({
+      instructionType: AnchorAmmInstruction.SetAdmin;
+    } & ParsedSetAdminInstruction<TProgram>)
+  | ({
       instructionType: AnchorAmmInstruction.Swap;
     } & ParsedSwapInstruction<TProgram>)
+  | ({
+      instructionType: AnchorAmmInstruction.Unlock;
+    } & ParsedUnlockInstruction<TProgram>)
   | ({
       instructionType: AnchorAmmInstruction.Withdraw;
     } & ParsedWithdrawInstruction<TProgram>);
@@ -178,11 +273,39 @@ export function parseAnchorAmmInstruction<TProgram extends string>(
         ...parseInitializeInstruction(instruction),
       };
     }
+    case AnchorAmmInstruction.InitializeAnalytics: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: AnchorAmmInstruction.InitializeAnalytics,
+        ...parseInitializeAnalyticsInstruction(instruction),
+      };
+    }
+    case AnchorAmmInstruction.Lock: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: AnchorAmmInstruction.Lock,
+        ...parseLockInstruction(instruction),
+      };
+    }
+    case AnchorAmmInstruction.SetAdmin: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: AnchorAmmInstruction.SetAdmin,
+        ...parseSetAdminInstruction(instruction),
+      };
+    }
     case AnchorAmmInstruction.Swap: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: AnchorAmmInstruction.Swap,
         ...parseSwapInstruction(instruction),
+      };
+    }
+    case AnchorAmmInstruction.Unlock: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: AnchorAmmInstruction.Unlock,
+        ...parseUnlockInstruction(instruction),
       };
     }
     case AnchorAmmInstruction.Withdraw: {
@@ -210,6 +333,8 @@ export type AnchorAmmPlugin = {
 };
 
 export type AnchorAmmPluginAccounts = {
+  analytics: ReturnType<typeof getAnalyticsCodec> &
+    SelfFetchFunctions<AnalyticsArgs, Analytics>;
   config: ReturnType<typeof getConfigCodec> &
     SelfFetchFunctions<ConfigArgs, Config>;
 };
@@ -222,9 +347,23 @@ export type AnchorAmmPluginInstructions = {
     input: MakeOptional<InitializeAsyncInput, "payer">,
   ) => ReturnType<typeof getInitializeInstructionAsync> &
     SelfPlanAndSendFunctions;
+  initializeAnalytics: (
+    input: MakeOptional<InitializeAnalyticsAsyncInput, "payer">,
+  ) => ReturnType<typeof getInitializeAnalyticsInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  lock: (
+    input: LockAsyncInput,
+  ) => ReturnType<typeof getLockInstructionAsync> & SelfPlanAndSendFunctions;
+  setAdmin: (
+    input: SetAdminAsyncInput,
+  ) => ReturnType<typeof getSetAdminInstructionAsync> &
+    SelfPlanAndSendFunctions;
   swap: (
     input: SwapAsyncInput,
   ) => ReturnType<typeof getSwapInstructionAsync> & SelfPlanAndSendFunctions;
+  unlock: (
+    input: UnlockAsyncInput,
+  ) => ReturnType<typeof getUnlockInstructionAsync> & SelfPlanAndSendFunctions;
   withdraw: (
     input: WithdrawAsyncInput,
   ) => ReturnType<typeof getWithdrawInstructionAsync> &
@@ -232,6 +371,7 @@ export type AnchorAmmPluginInstructions = {
 };
 
 export type AnchorAmmPluginPdas = {
+  analytics: typeof findAnalyticsPda;
   mintLp: typeof findMintLpPda;
   config: typeof findConfigPda;
 };
@@ -249,7 +389,10 @@ export function anchorAmmProgram() {
   ): Omit<T, "anchorAmm"> & { anchorAmm: AnchorAmmPlugin } => {
     return extendClient(client, {
       anchorAmm: <AnchorAmmPlugin>{
-        accounts: { config: addSelfFetchFunctions(client, getConfigCodec()) },
+        accounts: {
+          analytics: addSelfFetchFunctions(client, getAnalyticsCodec()),
+          config: addSelfFetchFunctions(client, getConfigCodec()),
+        },
         instructions: {
           deposit: (input) =>
             addSelfPlanAndSendFunctions(
@@ -264,15 +407,39 @@ export function anchorAmmProgram() {
                 payer: input.payer ?? client.payer,
               }),
             ),
+          initializeAnalytics: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getInitializeAnalyticsInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+          lock: (input) =>
+            addSelfPlanAndSendFunctions(client, getLockInstructionAsync(input)),
+          setAdmin: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getSetAdminInstructionAsync(input),
+            ),
           swap: (input) =>
             addSelfPlanAndSendFunctions(client, getSwapInstructionAsync(input)),
+          unlock: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUnlockInstructionAsync(input),
+            ),
           withdraw: (input) =>
             addSelfPlanAndSendFunctions(
               client,
               getWithdrawInstructionAsync(input),
             ),
         },
-        pdas: { mintLp: findMintLpPda, config: findConfigPda },
+        pdas: {
+          analytics: findAnalyticsPda,
+          mintLp: findMintLpPda,
+          config: findConfigPda,
+        },
       },
     });
   };

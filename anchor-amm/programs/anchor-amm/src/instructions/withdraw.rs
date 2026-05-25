@@ -5,7 +5,11 @@ use anchor_spl::{
 };
 use constant_product_curve::{ConstantProduct, XYAmounts};
 
-use crate::{error::AmmError, state::Config};
+use crate::{
+    constants::{ANALYTICS_SEED, WSOL_MINT},
+    error::AmmError,
+    state::{Analytics, Config},
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -20,6 +24,12 @@ pub struct Withdraw<'info> {
         bump = config.config_bump
     )]
     pub config: Box<Account<'info, Config>>,
+    #[account(
+        mut,
+        seeds = [ANALYTICS_SEED],
+        bump = analytics.bump,
+    )]
+    pub analytics: Box<Account<'info, Analytics>>,
     #[account(
         mut,
         seeds = [b"lp", config.key().as_ref()],
@@ -85,7 +95,24 @@ impl<'info> Withdraw<'info> {
 
         self.burn_lp_tokens(amount)?;
         self.withdraw_tokens(true, x)?;
-        self.withdraw_tokens(false, y)
+        self.withdraw_tokens(false, y)?;
+
+        let wsol_sub = if self.mint_x.key() == WSOL_MINT {
+            x
+        } else if self.mint_y.key() == WSOL_MINT {
+            y
+        } else {
+            0
+        };
+        if wsol_sub > 0 {
+            self.analytics.tvl_wsol = self
+                .analytics
+                .tvl_wsol
+                .checked_sub(wsol_sub)
+                .ok_or(AmmError::Underflow)?;
+        }
+
+        Ok(())
     }
 
     pub fn withdraw_tokens(&self, is_x: bool, amount: u64) -> Result<()> {

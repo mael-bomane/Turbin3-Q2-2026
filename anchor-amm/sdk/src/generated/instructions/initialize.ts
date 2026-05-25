@@ -10,12 +10,9 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressDecoder,
   getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getOptionDecoder,
-  getOptionEncoder,
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
@@ -29,14 +26,12 @@ import {
   type AccountMeta,
   type AccountSignerMeta,
   type Address,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
-  type Option,
-  type OptionOrNullable,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -49,7 +44,7 @@ import {
   getNonNullResolvedInstructionInput,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findConfigPda, findMintLpPda } from "../pdas";
+import { findAnalyticsPda, findConfigPda, findMintLpPda } from "../pdas";
 import { ANCHOR_AMM_PROGRAM_ADDRESS } from "../programs";
 
 export const INITIALIZE_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
@@ -69,6 +64,7 @@ export type InitializeInstruction<
   TAccountVaultX extends string | AccountMeta<string> = string,
   TAccountVaultY extends string | AccountMeta<string> = string,
   TAccountConfig extends string | AccountMeta<string> = string,
+  TAccountAnalytics extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
   TAccountTokenProgram extends string | AccountMeta<string> =
@@ -102,6 +98,9 @@ export type InitializeInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountAnalytics extends string
+        ? WritableAccount<TAccountAnalytics>
+        : TAccountAnalytics,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -119,37 +118,33 @@ export type InitializeInstructionData = {
   discriminator: ReadonlyUint8Array;
   seed: bigint;
   fee: number;
-  authority: Option<Address>;
 };
 
 export type InitializeInstructionDataArgs = {
   seed: number | bigint;
   fee: number;
-  authority: OptionOrNullable<Address>;
 };
 
-export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstructionDataArgs> {
+export function getInitializeInstructionDataEncoder(): FixedSizeEncoder<InitializeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["seed", getU64Encoder()],
       ["fee", getU16Encoder()],
-      ["authority", getOptionEncoder(getAddressEncoder())],
     ]),
     (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
   );
 }
 
-export function getInitializeInstructionDataDecoder(): Decoder<InitializeInstructionData> {
+export function getInitializeInstructionDataDecoder(): FixedSizeDecoder<InitializeInstructionData> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["seed", getU64Decoder()],
     ["fee", getU16Decoder()],
-    ["authority", getOptionDecoder(getAddressDecoder())],
   ]);
 }
 
-export function getInitializeInstructionDataCodec(): Codec<
+export function getInitializeInstructionDataCodec(): FixedSizeCodec<
   InitializeInstructionDataArgs,
   InitializeInstructionData
 > {
@@ -167,6 +162,7 @@ export type InitializeAsyncInput<
   TAccountVaultX extends string = string,
   TAccountVaultY extends string = string,
   TAccountConfig extends string = string,
+  TAccountAnalytics extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
@@ -178,12 +174,12 @@ export type InitializeAsyncInput<
   vaultX?: Address<TAccountVaultX>;
   vaultY?: Address<TAccountVaultY>;
   config?: Address<TAccountConfig>;
+  analytics?: Address<TAccountAnalytics>;
   systemProgram?: Address<TAccountSystemProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   seed: InitializeInstructionDataArgs["seed"];
   fee: InitializeInstructionDataArgs["fee"];
-  authority: InitializeInstructionDataArgs["authority"];
 };
 
 export async function getInitializeInstructionAsync<
@@ -194,6 +190,7 @@ export async function getInitializeInstructionAsync<
   TAccountVaultX extends string,
   TAccountVaultY extends string,
   TAccountConfig extends string,
+  TAccountAnalytics extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
@@ -207,6 +204,7 @@ export async function getInitializeInstructionAsync<
     TAccountVaultX,
     TAccountVaultY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountSystemProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram
@@ -222,6 +220,7 @@ export async function getInitializeInstructionAsync<
     TAccountVaultX,
     TAccountVaultY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountSystemProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram
@@ -239,6 +238,7 @@ export async function getInitializeInstructionAsync<
     vaultX: { value: input.vaultX ?? null, isWritable: true },
     vaultY: { value: input.vaultY ?? null, isWritable: true },
     config: { value: input.config ?? null, isWritable: true },
+    analytics: { value: input.analytics ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -322,6 +322,9 @@ export async function getInitializeInstructionAsync<
       ],
     });
   }
+  if (!accounts.analytics.value) {
+    accounts.analytics.value = await findAnalyticsPda();
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       "11111111111111111111111111111111" as Address<"11111111111111111111111111111111">;
@@ -345,6 +348,7 @@ export async function getInitializeInstructionAsync<
       getAccountMeta("vaultX", accounts.vaultX),
       getAccountMeta("vaultY", accounts.vaultY),
       getAccountMeta("config", accounts.config),
+      getAccountMeta("analytics", accounts.analytics),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
@@ -362,6 +366,7 @@ export async function getInitializeInstructionAsync<
     TAccountVaultX,
     TAccountVaultY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountSystemProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram
@@ -376,6 +381,7 @@ export type InitializeInput<
   TAccountVaultX extends string = string,
   TAccountVaultY extends string = string,
   TAccountConfig extends string = string,
+  TAccountAnalytics extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountAssociatedTokenProgram extends string = string,
@@ -387,12 +393,12 @@ export type InitializeInput<
   vaultX: Address<TAccountVaultX>;
   vaultY: Address<TAccountVaultY>;
   config: Address<TAccountConfig>;
+  analytics: Address<TAccountAnalytics>;
   systemProgram?: Address<TAccountSystemProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   seed: InitializeInstructionDataArgs["seed"];
   fee: InitializeInstructionDataArgs["fee"];
-  authority: InitializeInstructionDataArgs["authority"];
 };
 
 export function getInitializeInstruction<
@@ -403,6 +409,7 @@ export function getInitializeInstruction<
   TAccountVaultX extends string,
   TAccountVaultY extends string,
   TAccountConfig extends string,
+  TAccountAnalytics extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
@@ -416,6 +423,7 @@ export function getInitializeInstruction<
     TAccountVaultX,
     TAccountVaultY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountSystemProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram
@@ -430,6 +438,7 @@ export function getInitializeInstruction<
   TAccountVaultX,
   TAccountVaultY,
   TAccountConfig,
+  TAccountAnalytics,
   TAccountSystemProgram,
   TAccountTokenProgram,
   TAccountAssociatedTokenProgram
@@ -446,6 +455,7 @@ export function getInitializeInstruction<
     vaultX: { value: input.vaultX ?? null, isWritable: true },
     vaultY: { value: input.vaultY ?? null, isWritable: true },
     config: { value: input.config ?? null, isWritable: true },
+    analytics: { value: input.analytics ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     associatedTokenProgram: {
@@ -485,6 +495,7 @@ export function getInitializeInstruction<
       getAccountMeta("vaultX", accounts.vaultX),
       getAccountMeta("vaultY", accounts.vaultY),
       getAccountMeta("config", accounts.config),
+      getAccountMeta("analytics", accounts.analytics),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("associatedTokenProgram", accounts.associatedTokenProgram),
@@ -502,6 +513,7 @@ export function getInitializeInstruction<
     TAccountVaultX,
     TAccountVaultY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountSystemProgram,
     TAccountTokenProgram,
     TAccountAssociatedTokenProgram
@@ -521,9 +533,10 @@ export type ParsedInitializeInstruction<
     vaultX: TAccountMetas[4];
     vaultY: TAccountMetas[5];
     config: TAccountMetas[6];
-    systemProgram: TAccountMetas[7];
-    tokenProgram: TAccountMetas[8];
-    associatedTokenProgram: TAccountMetas[9];
+    analytics: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
+    tokenProgram: TAccountMetas[9];
+    associatedTokenProgram: TAccountMetas[10];
   };
   data: InitializeInstructionData;
 };
@@ -536,12 +549,12 @@ export function parseInitializeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 11) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 10,
+        expectedAccountMetas: 11,
       },
     );
   }
@@ -561,6 +574,7 @@ export function parseInitializeInstruction<
       vaultX: getNextAccount(),
       vaultY: getNextAccount(),
       config: getNextAccount(),
+      analytics: getNextAccount(),
       systemProgram: getNextAccount(),
       tokenProgram: getNextAccount(),
       associatedTokenProgram: getNextAccount(),

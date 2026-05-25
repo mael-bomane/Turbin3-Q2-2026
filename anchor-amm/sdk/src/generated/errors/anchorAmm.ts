@@ -22,36 +22,38 @@ export const ANCHOR_AMM_ERROR__DEFAULT_ERROR = 0x1771; // 6001
 export const ANCHOR_AMM_ERROR__OFFER_EXPIRED = 0x1772; // 6002
 /** PoolLocked: Pool locked */
 export const ANCHOR_AMM_ERROR__POOL_LOCKED = 0x1773; // 6003
+/** PoolUnlocked: Pool already unlocked */
+export const ANCHOR_AMM_ERROR__POOL_UNLOCKED = 0x1774; // 6004
 /** SlippageExceeded: Slippage Exceeded */
-export const ANCHOR_AMM_ERROR__SLIPPAGE_EXCEEDED = 0x1774; // 6004
+export const ANCHOR_AMM_ERROR__SLIPPAGE_EXCEEDED = 0x1775; // 6005
 /** Overflow: Overflow detected */
-export const ANCHOR_AMM_ERROR__OVERFLOW = 0x1775; // 6005
+export const ANCHOR_AMM_ERROR__OVERFLOW = 0x1776; // 6006
 /** Underflow: Underflow detected */
-export const ANCHOR_AMM_ERROR__UNDERFLOW = 0x1776; // 6006
+export const ANCHOR_AMM_ERROR__UNDERFLOW = 0x1777; // 6007
 /** InvalidToken: Invalid token */
-export const ANCHOR_AMM_ERROR__INVALID_TOKEN = 0x1777; // 6007
+export const ANCHOR_AMM_ERROR__INVALID_TOKEN = 0x1778; // 6008
 /** LiquidityLessThanMinimum: Actual liquidity is less than minimum */
-export const ANCHOR_AMM_ERROR__LIQUIDITY_LESS_THAN_MINIMUM = 0x1778; // 6008
+export const ANCHOR_AMM_ERROR__LIQUIDITY_LESS_THAN_MINIMUM = 0x1779; // 6009
 /** NoLiquidityInPool: No liquidity in pool */
-export const ANCHOR_AMM_ERROR__NO_LIQUIDITY_IN_POOL = 0x1779; // 6009
+export const ANCHOR_AMM_ERROR__NO_LIQUIDITY_IN_POOL = 0x177a; // 6010
 /** BumpError: Bump error */
-export const ANCHOR_AMM_ERROR__BUMP_ERROR = 0x177a; // 6010
+export const ANCHOR_AMM_ERROR__BUMP_ERROR = 0x177b; // 6011
 /** CurveError: Curve error */
-export const ANCHOR_AMM_ERROR__CURVE_ERROR = 0x177b; // 6011
+export const ANCHOR_AMM_ERROR__CURVE_ERROR = 0x177c; // 6012
 /** InvalidFee: Fee is greater than 100%. This is not a very good deal */
-export const ANCHOR_AMM_ERROR__INVALID_FEE = 0x177c; // 6012
+export const ANCHOR_AMM_ERROR__INVALID_FEE = 0x177d; // 6013
 /** InvalidAuthority: Invalid update authority */
-export const ANCHOR_AMM_ERROR__INVALID_AUTHORITY = 0x177d; // 6013
+export const ANCHOR_AMM_ERROR__INVALID_AUTHORITY = 0x177e; // 6014
 /** NoAuthoritySet: No update authority set */
-export const ANCHOR_AMM_ERROR__NO_AUTHORITY_SET = 0x177e; // 6014
+export const ANCHOR_AMM_ERROR__NO_AUTHORITY_SET = 0x177f; // 6015
 /** InvalidAmount: Invalid Amount */
-export const ANCHOR_AMM_ERROR__INVALID_AMOUNT = 0x177f; // 6015
+export const ANCHOR_AMM_ERROR__INVALID_AMOUNT = 0x1780; // 6016
 /** InvalidPrecision: Invalid Precision */
-export const ANCHOR_AMM_ERROR__INVALID_PRECISION = 0x1780; // 6016
+export const ANCHOR_AMM_ERROR__INVALID_PRECISION = 0x1781; // 6017
 /** InsufficientBalance: Insufficient balance */
-export const ANCHOR_AMM_ERROR__INSUFFICIENT_BALANCE = 0x1781; // 6017
+export const ANCHOR_AMM_ERROR__INSUFFICIENT_BALANCE = 0x1782; // 6018
 /** ZeroBalance: Zero balance */
-export const ANCHOR_AMM_ERROR__ZERO_BALANCE = 0x1782; // 6018
+export const ANCHOR_AMM_ERROR__ZERO_BALANCE = 0x1783; // 6019
 
 export type AnchorAmmError =
   | typeof ANCHOR_AMM_ERROR__BUMP_ERROR
@@ -70,6 +72,7 @@ export type AnchorAmmError =
   | typeof ANCHOR_AMM_ERROR__OFFER_EXPIRED
   | typeof ANCHOR_AMM_ERROR__OVERFLOW
   | typeof ANCHOR_AMM_ERROR__POOL_LOCKED
+  | typeof ANCHOR_AMM_ERROR__POOL_UNLOCKED
   | typeof ANCHOR_AMM_ERROR__SLIPPAGE_EXCEEDED
   | typeof ANCHOR_AMM_ERROR__UNDERFLOW
   | typeof ANCHOR_AMM_ERROR__ZERO_BALANCE;
@@ -93,6 +96,7 @@ if (process.env["NODE_ENV"] !== "production") {
     [ANCHOR_AMM_ERROR__OFFER_EXPIRED]: `Offer expired`,
     [ANCHOR_AMM_ERROR__OVERFLOW]: `Overflow detected`,
     [ANCHOR_AMM_ERROR__POOL_LOCKED]: `Pool locked`,
+    [ANCHOR_AMM_ERROR__POOL_UNLOCKED]: `Pool already unlocked`,
     [ANCHOR_AMM_ERROR__SLIPPAGE_EXCEEDED]: `Slippage Exceeded`,
     [ANCHOR_AMM_ERROR__UNDERFLOW]: `Underflow detected`,
     [ANCHOR_AMM_ERROR__ZERO_BALANCE]: `Zero balance`,

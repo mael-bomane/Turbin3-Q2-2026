@@ -8,5 +8,9 @@
 
 export * from "./deposit";
 export * from "./initialize";
+export * from "./initializeAnalytics";
+export * from "./lock";
+export * from "./setAdmin";
 export * from "./swap";
+export * from "./unlock";
 export * from "./withdraw";

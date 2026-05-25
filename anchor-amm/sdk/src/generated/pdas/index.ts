@@ -6,5 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from "./analytics";
 export * from "./config";
 export * from "./mintLp";

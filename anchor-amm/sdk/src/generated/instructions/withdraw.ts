@@ -41,7 +41,7 @@ import {
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from "@solana/program-client-core";
-import { findMintLpPda } from "../pdas";
+import { findAnalyticsPda, findMintLpPda } from "../pdas";
 import { ANCHOR_AMM_PROGRAM_ADDRESS } from "../programs";
 
 export const WITHDRAW_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([
@@ -58,6 +58,7 @@ export type WithdrawInstruction<
   TAccountMintX extends string | AccountMeta<string> = string,
   TAccountMintY extends string | AccountMeta<string> = string,
   TAccountConfig extends string | AccountMeta<string> = string,
+  TAccountAnalytics extends string | AccountMeta<string> = string,
   TAccountMintLp extends string | AccountMeta<string> = string,
   TAccountVaultX extends string | AccountMeta<string> = string,
   TAccountVaultY extends string | AccountMeta<string> = string,
@@ -87,6 +88,9 @@ export type WithdrawInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountAnalytics extends string
+        ? WritableAccount<TAccountAnalytics>
+        : TAccountAnalytics,
       TAccountMintLp extends string
         ? WritableAccount<TAccountMintLp>
         : TAccountMintLp,
@@ -167,6 +171,7 @@ export type WithdrawAsyncInput<
   TAccountMintX extends string = string,
   TAccountMintY extends string = string,
   TAccountConfig extends string = string,
+  TAccountAnalytics extends string = string,
   TAccountMintLp extends string = string,
   TAccountVaultX extends string = string,
   TAccountVaultY extends string = string,
@@ -181,6 +186,7 @@ export type WithdrawAsyncInput<
   mintX: Address<TAccountMintX>;
   mintY: Address<TAccountMintY>;
   config: Address<TAccountConfig>;
+  analytics?: Address<TAccountAnalytics>;
   mintLp?: Address<TAccountMintLp>;
   vaultX?: Address<TAccountVaultX>;
   vaultY?: Address<TAccountVaultY>;
@@ -200,6 +206,7 @@ export async function getWithdrawInstructionAsync<
   TAccountMintX extends string,
   TAccountMintY extends string,
   TAccountConfig extends string,
+  TAccountAnalytics extends string,
   TAccountMintLp extends string,
   TAccountVaultX extends string,
   TAccountVaultY extends string,
@@ -216,6 +223,7 @@ export async function getWithdrawInstructionAsync<
     TAccountMintX,
     TAccountMintY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountMintLp,
     TAccountVaultX,
     TAccountVaultY,
@@ -234,6 +242,7 @@ export async function getWithdrawInstructionAsync<
     TAccountMintX,
     TAccountMintY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountMintLp,
     TAccountVaultX,
     TAccountVaultY,
@@ -254,6 +263,7 @@ export async function getWithdrawInstructionAsync<
     mintX: { value: input.mintX ?? null, isWritable: false },
     mintY: { value: input.mintY ?? null, isWritable: false },
     config: { value: input.config ?? null, isWritable: false },
+    analytics: { value: input.analytics ?? null, isWritable: true },
     mintLp: { value: input.mintLp ?? null, isWritable: true },
     vaultX: { value: input.vaultX ?? null, isWritable: true },
     vaultY: { value: input.vaultY ?? null, isWritable: true },
@@ -276,6 +286,9 @@ export async function getWithdrawInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.analytics.value) {
+    accounts.analytics.value = await findAnalyticsPda();
+  }
   if (!accounts.mintLp.value) {
     accounts.mintLp.value = await findMintLpPda({
       config: getAddressFromResolvedInstructionAccount(
@@ -430,6 +443,7 @@ export async function getWithdrawInstructionAsync<
       getAccountMeta("mintX", accounts.mintX),
       getAccountMeta("mintY", accounts.mintY),
       getAccountMeta("config", accounts.config),
+      getAccountMeta("analytics", accounts.analytics),
       getAccountMeta("mintLp", accounts.mintLp),
       getAccountMeta("vaultX", accounts.vaultX),
       getAccountMeta("vaultY", accounts.vaultY),
@@ -450,6 +464,7 @@ export async function getWithdrawInstructionAsync<
     TAccountMintX,
     TAccountMintY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountMintLp,
     TAccountVaultX,
     TAccountVaultY,
@@ -467,6 +482,7 @@ export type WithdrawInput<
   TAccountMintX extends string = string,
   TAccountMintY extends string = string,
   TAccountConfig extends string = string,
+  TAccountAnalytics extends string = string,
   TAccountMintLp extends string = string,
   TAccountVaultX extends string = string,
   TAccountVaultY extends string = string,
@@ -481,6 +497,7 @@ export type WithdrawInput<
   mintX: Address<TAccountMintX>;
   mintY: Address<TAccountMintY>;
   config: Address<TAccountConfig>;
+  analytics: Address<TAccountAnalytics>;
   mintLp: Address<TAccountMintLp>;
   vaultX: Address<TAccountVaultX>;
   vaultY: Address<TAccountVaultY>;
@@ -500,6 +517,7 @@ export function getWithdrawInstruction<
   TAccountMintX extends string,
   TAccountMintY extends string,
   TAccountConfig extends string,
+  TAccountAnalytics extends string,
   TAccountMintLp extends string,
   TAccountVaultX extends string,
   TAccountVaultY extends string,
@@ -516,6 +534,7 @@ export function getWithdrawInstruction<
     TAccountMintX,
     TAccountMintY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountMintLp,
     TAccountVaultX,
     TAccountVaultY,
@@ -533,6 +552,7 @@ export function getWithdrawInstruction<
   TAccountMintX,
   TAccountMintY,
   TAccountConfig,
+  TAccountAnalytics,
   TAccountMintLp,
   TAccountVaultX,
   TAccountVaultY,
@@ -552,6 +572,7 @@ export function getWithdrawInstruction<
     mintX: { value: input.mintX ?? null, isWritable: false },
     mintY: { value: input.mintY ?? null, isWritable: false },
     config: { value: input.config ?? null, isWritable: false },
+    analytics: { value: input.analytics ?? null, isWritable: true },
     mintLp: { value: input.mintLp ?? null, isWritable: true },
     vaultX: { value: input.vaultX ?? null, isWritable: true },
     vaultY: { value: input.vaultY ?? null, isWritable: true },
@@ -594,6 +615,7 @@ export function getWithdrawInstruction<
       getAccountMeta("mintX", accounts.mintX),
       getAccountMeta("mintY", accounts.mintY),
       getAccountMeta("config", accounts.config),
+      getAccountMeta("analytics", accounts.analytics),
       getAccountMeta("mintLp", accounts.mintLp),
       getAccountMeta("vaultX", accounts.vaultX),
       getAccountMeta("vaultY", accounts.vaultY),
@@ -614,6 +636,7 @@ export function getWithdrawInstruction<
     TAccountMintX,
     TAccountMintY,
     TAccountConfig,
+    TAccountAnalytics,
     TAccountMintLp,
     TAccountVaultX,
     TAccountVaultY,
@@ -636,15 +659,16 @@ export type ParsedWithdrawInstruction<
     mintX: TAccountMetas[1];
     mintY: TAccountMetas[2];
     config: TAccountMetas[3];
-    mintLp: TAccountMetas[4];
-    vaultX: TAccountMetas[5];
-    vaultY: TAccountMetas[6];
-    userX: TAccountMetas[7];
-    userY: TAccountMetas[8];
-    userLp: TAccountMetas[9];
-    tokenProgram: TAccountMetas[10];
-    systemProgram: TAccountMetas[11];
-    associatedTokenProgram: TAccountMetas[12];
+    analytics: TAccountMetas[4];
+    mintLp: TAccountMetas[5];
+    vaultX: TAccountMetas[6];
+    vaultY: TAccountMetas[7];
+    userX: TAccountMetas[8];
+    userY: TAccountMetas[9];
+    userLp: TAccountMetas[10];
+    tokenProgram: TAccountMetas[11];
+    systemProgram: TAccountMetas[12];
+    associatedTokenProgram: TAccountMetas[13];
   };
   data: WithdrawInstructionData;
 };
@@ -657,12 +681,12 @@ export function parseWithdrawInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedWithdrawInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 13) {
+  if (instruction.accounts.length < 14) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 13,
+        expectedAccountMetas: 14,
       },
     );
   }
@@ -679,6 +703,7 @@ export function parseWithdrawInstruction<
       mintX: getNextAccount(),
       mintY: getNextAccount(),
       config: getNextAccount(),
+      analytics: getNextAccount(),
       mintLp: getNextAccount(),
       vaultX: getNextAccount(),
       vaultY: getNextAccount(),

@@ -15,13 +15,16 @@ declare_id!("7f96rDy6EdQzb5PbNbgWeYFfSnioRjFekrk2iah6ufzL");
 pub mod anchor_amm {
     use super::*;
 
-    pub fn initialize(
-        ctx: Context<Initialize>,
-        seed: u64,
-        fee: u16,
-        authority: Option<Pubkey>,
-    ) -> Result<()> {
-        ctx.accounts.initialize(seed, fee, authority, ctx.bumps)
+    pub fn initialize_analytics(ctx: Context<InitializeAnalytics>, admin: Pubkey) -> Result<()> {
+        ctx.accounts.initialize_analytics(admin, ctx.bumps)
+    }
+
+    pub fn initialize(ctx: Context<Initialize>, seed: u64, fee: u16) -> Result<()> {
+        ctx.accounts.initialize(seed, fee, ctx.bumps)
+    }
+
+    pub fn set_admin(ctx: Context<SetAdmin>, new_admin: Pubkey) -> Result<()> {
+        ctx.accounts.set_admin(new_admin)
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64, max_x: u64, max_y: u64) -> Result<()> {
@@ -34,5 +37,13 @@ pub mod anchor_amm {
 
     pub fn swap(ctx: Context<Swap>, is_x: bool, amount_in: u64, min_amount_out: u64) -> Result<()> {
         ctx.accounts.swap(is_x, amount_in, min_amount_out)
+    }
+
+    pub fn lock(ctx: Context<Lock>) -> Result<()> {
+        ctx.accounts.lock()
+    }
+
+    pub fn unlock(ctx: Context<Unlock>) -> Result<()> {
+        ctx.accounts.unlock()
     }
 }

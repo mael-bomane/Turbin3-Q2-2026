@@ -21,8 +21,6 @@ import {
   getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getOptionDecoder,
-  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
   getU16Decoder,
@@ -34,16 +32,14 @@ import {
   transformEncoder,
   type Account,
   type Address,
-  type Codec,
-  type Decoder,
   type EncodedAccount,
-  type Encoder,
   type FetchAccountConfig,
   type FetchAccountsConfig,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
   type MaybeAccount,
   type MaybeEncodedAccount,
-  type Option,
-  type OptionOrNullable,
   type ReadonlyUint8Array,
 } from "@solana/kit";
 
@@ -58,37 +54,37 @@ export function getConfigDiscriminatorBytes(): ReadonlyUint8Array {
 export type Config = {
   discriminator: ReadonlyUint8Array;
   seed: bigint;
-  authority: Option<Address>;
   mintX: Address;
   mintY: Address;
   fee: number;
   locked: boolean;
+  activated: boolean;
   configBump: number;
   lpBump: number;
 };
 
 export type ConfigArgs = {
   seed: number | bigint;
-  authority: OptionOrNullable<Address>;
   mintX: Address;
   mintY: Address;
   fee: number;
   locked: boolean;
+  activated: boolean;
   configBump: number;
   lpBump: number;
 };
 
 /** Gets the encoder for {@link ConfigArgs} account data. */
-export function getConfigEncoder(): Encoder<ConfigArgs> {
+export function getConfigEncoder(): FixedSizeEncoder<ConfigArgs> {
   return transformEncoder(
     getStructEncoder([
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["seed", getU64Encoder()],
-      ["authority", getOptionEncoder(getAddressEncoder())],
       ["mintX", getAddressEncoder()],
       ["mintY", getAddressEncoder()],
       ["fee", getU16Encoder()],
       ["locked", getBooleanEncoder()],
+      ["activated", getBooleanEncoder()],
       ["configBump", getU8Encoder()],
       ["lpBump", getU8Encoder()],
     ]),
@@ -97,22 +93,22 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
 }
 
 /** Gets the decoder for {@link Config} account data. */
-export function getConfigDecoder(): Decoder<Config> {
+export function getConfigDecoder(): FixedSizeDecoder<Config> {
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["seed", getU64Decoder()],
-    ["authority", getOptionDecoder(getAddressDecoder())],
     ["mintX", getAddressDecoder()],
     ["mintY", getAddressDecoder()],
     ["fee", getU16Decoder()],
     ["locked", getBooleanDecoder()],
+    ["activated", getBooleanDecoder()],
     ["configBump", getU8Decoder()],
     ["lpBump", getU8Decoder()],
   ]);
 }
 
 /** Gets the codec for {@link Config} account data. */
-export function getConfigCodec(): Codec<ConfigArgs, Config> {
+export function getConfigCodec(): FixedSizeCodec<ConfigArgs, Config> {
   return combineCodec(getConfigEncoder(), getConfigDecoder());
 }
 
@@ -167,4 +163,8 @@ export async function fetchAllMaybeConfig(
 ): Promise<MaybeAccount<Config>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeConfig(maybeAccount));
+}
+
+export function getConfigSize(): number {
+  return 86;
 }
