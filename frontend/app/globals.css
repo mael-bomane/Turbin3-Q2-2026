@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* @import 'prism-themes/themes/prism-vsc-dark-plus.css'; */
+
+:root {
+  --network-color: #14F195;
+}
+
+html,
+body {
+  scroll-behavior: smooth !important;
+}
+
+/* It makes the HTML progress bar filling smooth when value change. */
+progress::-webkit-progress-value {
+  transition: 0.6s width ease-out;
+}
+
+[data-theme='dark'] blockquote {
+  border-left-color: #14F195 !important;
+}
+
+[data-theme='dark'] li::marker {
+  color:  #14F195 !important;
+  font-weight: bold !important;
+}
+
+[data-theme='dark'] ol>li>p>span.ollisub {
+  color:  #14F195 !important;
+  font-weight: bold !important;
+}
+
+/* article ,
+article > h2 {
+  color: white !important;
+} */
+
+article > p > img {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+article > pre {
+    /* background-color: #eff0f1 !important; */
+    padding: 16px !important;
+    /* border-radius: 4px !important; */
+    font-size: 14px !important;
+    margin-bottom: 4.1rem !important;
+    padding-top: 2.5rem !important;
+    /* padding: 3.7rem 0 1.6rem .4rem !important; */
+    /* border-radius: 12px !important;*/
+    overflow: hidden !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    background-image: url('/images/window-buttons.png') !important;
+    background-repeat: no-repeat !important;
+    background-size: 44px 10px !important;
+    background-position: 16px 14px !important;
+}
+
+article > pre > code > span.code-line {
+  margin: 0 0 !important;
+  padding: 0 0 !important;
+}
+
+article > p > code {
+  color: #14F195 !important;
+}
+
+  article > pre {
+  border: 1px solid #14F195;
+  background: --secondary;
+}
+
+/* article > p > strong, */
+[data-theme='dark'],
+[data-theme='dark'] article > p > a, 
+[data-theme='dark'] article > ul > li > a, 
+[data-theme='dark'] article > ul > li > strong > a, 
+[data-theme='dark'] article > blockquote > p > a,
+[data-theme='dark'] article > div > a,
+[data-theme='dark'] article > ol > li > a,
+[data-theme='dark'] article > ul > li > em > a,
+[data-theme='dark'] article > ol > li > em > a
+{
+  color:  #14F195 !important;
+  text-decoration: none !important;
+  font-weight: bold;
+}
+
+article > blockquote, 
+article > blockquote > p
+{
+  margin-bottom: 0 !important;
+}
+
+@layer utilities {
+  @keyframes bounce-x {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+  }
+
+  @keyframes glitch {
+  0% { transform: translate(0); text-shadow: -2px 0 red, 2px 0 cyan; }
+  25% { transform: translate(-1px, 1px); text-shadow: -2px 0 red, 2px 0 cyan; }
+  50% { transform: translate(1px, -1px); text-shadow: 2px 0 red, -2px 0 cyan; }
+  75% { transform: translate(-1px, -1px); text-shadow: -2px 0 red, 2px 0 cyan; }
+  100% { transform: translate(0); text-shadow: none; }
+}
+
+.animate-glitch {
+  animation: glitch 0.2s cubic-bezier(.25,.46,.45,.94) both infinite;
+}
+}
+
+@layer base {
+  .btn-gradient {
+    @apply !bg-gradient !bg-[length:300%_300%] hover:saturate-[1.2] shadow duration-100 !border-0 !border-transparent !bg-transparent animate-shimmer disabled:!bg-none disabled:!bg-gray-500/30  !text-white;
+  }
+  .btn {
+    @apply !capitalize;
+  }
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
