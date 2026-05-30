@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm -r --workspace-concurrency=1 --if-present run test",
+    "vault:test": "pnpm --filter anchor-vault test",
+    "escrow:test": "pnpm --filter @trib3/anchor-escrow test",
+    "staking:test": "pnpm --filter @trib3/anchor-nft-staking test",
     "spl:init": "pnpm ts-node prereqs/spl/init.ts",
     "spl:metadata": "pnpm ts-node prereqs/spl/metadata.ts",
     "spl:mint": "pnpm ts-node prereqs/spl/mint.ts",
@@ -21,16 +24,24 @@
     "escrow:sdk:dist": "pnpm --filter @trib3/anchor-escrow sdk:dist",
     "escrow:sdk:build": "pnpm --filter @trib3/anchor-escrow sdk:build",
     "escrow:sdk:regen": "pnpm --filter @trib3/anchor-escrow sdk:regen",
+    "escrow:sdk:test": "pnpm --filter @trib3/anchor-escrow sdk:test",
+    "amm:test": "pnpm --filter @trib3/anchor-amm test",
     "amm:sdk:gen": "pnpm --filter @trib3/anchor-amm sdk:gen",
     "amm:sdk:dist": "pnpm --filter @trib3/anchor-amm sdk:dist",
     "amm:sdk:build": "pnpm --filter @trib3/anchor-amm sdk:build",
     "amm:sdk:regen": "pnpm --filter @trib3/anchor-amm sdk:regen",
+    "amm:sdk:test": "pnpm --filter @trib3/anchor-amm sdk:test",
     "sdk:build": "pnpm run escrow:sdk:build && pnpm run amm:sdk:build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
+  "pnpm": {
+    "overrides": {
+      "@noble/hashes": "1.8.0"
+    }
+  },
   "devDependencies": {
     "ts-node": "^10.9.2",
     "typescript": "latest"

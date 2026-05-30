@@ -3,6 +3,7 @@
   "private": true,
   "license": "ISC",
   "scripts": {
+    "test": "anchor test",
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "sdk:clean": "rm -rf sdk/src/generated sdk/dist",

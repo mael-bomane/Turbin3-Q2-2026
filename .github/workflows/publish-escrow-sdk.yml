@@ -40,4 +40,4 @@ jobs:
 
       - name: Publish
         working-directory: anchor-escrow/sdk
-        run: npm publish --provenance --access public --tag ${{ inputs.tag || 'latest' }}
+        run: npm publish --access public --tag ${{ inputs.tag || 'latest' }}
