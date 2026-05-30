@@ -3,13 +3,6 @@
   "version": "0.1.0",
   "description": "TypeScript SDK for the anchor-amm Solana program",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mael-bomane/Turbin3-Q2-2026.git",
-    "directory": "anchor-amm/sdk"
-  },
-  "homepage": "https://github.com/mael-bomane/Turbin3-Q2-2026/tree/main/anchor-amm/sdk#readme",
-  "bugs": "https://github.com/mael-bomane/Turbin3-Q2-2026/issues",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
