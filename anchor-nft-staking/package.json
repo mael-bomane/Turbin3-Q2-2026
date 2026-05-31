@@ -4,7 +4,12 @@
   "scripts": {
     "test": "anchor test",
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "sdk:clean": "rm -rf sdk/src/generated sdk/dist",
+    "sdk:gen": "node codama.mjs",
+    "sdk:dist": "pnpm --filter @trib3/anchor-nft-staking-sdk build",
+    "sdk:build": "anchor build && pnpm run sdk:gen && pnpm run sdk:dist",
+    "sdk:regen": "pnpm run sdk:clean && pnpm run sdk:build"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
@@ -16,6 +21,9 @@
     "@solana/web3.js": "^1.98.4"
   },
   "devDependencies": {
+    "@codama/nodes-from-anchor": "^1.4.1",
+    "@codama/renderers-js": "^2.2.0",
+    "codama": "^1.6.0",
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",

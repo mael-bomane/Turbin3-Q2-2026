@@ -5,4 +5,6 @@ packages:
   - "anchor-amm"
   - "anchor-amm/sdk"
   - "anchor-nft-staking"
+  - "anchor-nft-staking/sdk"
+  - "anchor-nft-marketplace"
   - "frontend"
