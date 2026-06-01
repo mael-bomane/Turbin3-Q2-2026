@@ -118,15 +118,34 @@ pub fn handler(ctx: Context<Stake>) -> Result<()> {
 
     // Freeze the asset with the FreezeDelegate Plugin
     // Note that the FreezeDeletage is a Owner-Managed Plugin, so it needs to be signed by the owner
-    AddPluginV1CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
-        .asset(&ctx.accounts.asset.to_account_info())
-        .collection(Some(&ctx.accounts.collection.to_account_info()))
-        .payer(&ctx.accounts.owner.to_account_info())
-        .authority(Some(&ctx.accounts.owner.to_account_info()))
-        .system_program(&ctx.accounts.system_program.to_account_info())
-        .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: true }))
-        .init_authority(PluginAuthority::UpdateAuthority)
-        .invoke()?;
+    let freeze_delegate_fetched: Option<FreezeDelegate> =
+        fetch_plugin::<BaseAssetV1, FreezeDelegate>(
+            &ctx.accounts.asset.to_account_info(),
+            PluginType::FreezeDelegate,
+        )
+        .ok()
+        .map(|(_, freeze_delegate, _)| freeze_delegate);
+
+    if freeze_delegate_fetched.is_none() {
+        AddPluginV1CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
+            .asset(&ctx.accounts.asset.to_account_info())
+            .collection(Some(&ctx.accounts.collection.to_account_info()))
+            .payer(&ctx.accounts.owner.to_account_info())
+            .authority(Some(&ctx.accounts.owner.to_account_info()))
+            .system_program(&ctx.accounts.system_program.to_account_info())
+            .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: true }))
+            .init_authority(PluginAuthority::UpdateAuthority)
+            .invoke()?;
+    } else {
+        UpdatePluginV1CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
+            .asset(&ctx.accounts.asset.to_account_info())
+            .collection(Some(&ctx.accounts.collection.to_account_info()))
+            .payer(&ctx.accounts.owner.to_account_info())
+            .authority(Some(&ctx.accounts.update_authority.to_account_info()))
+            .system_program(&ctx.accounts.system_program.to_account_info())
+            .plugin(Plugin::FreezeDelegate(FreezeDelegate { frozen: true }))
+            .invoke_signed(&[signer_seeds])?;
+    }
 
     Ok(())
 }

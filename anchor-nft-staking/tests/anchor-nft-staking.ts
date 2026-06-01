@@ -338,7 +338,7 @@ describe("anchor-nft-staking", () => {
     );
   });
 
-  it("Stake an NFT", async () => {
+  it("Restake an NFT", async () => {
     const tx = await program.methods
       .stake()
       .accountsPartial({
