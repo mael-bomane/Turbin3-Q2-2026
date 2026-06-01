@@ -337,4 +337,28 @@ describe("anchor-nft-staking", () => {
         .uiAmount,
     );
   });
+
+  it("Stake an NFT", async () => {
+    const tx = await program.methods
+      .stake()
+      .accountsPartial({
+        owner: provider.wallet.publicKey,
+        updateAuthority,
+        config,
+        asset: nftKeypair.publicKey,
+        collection: collectionKeypair.publicKey,
+        systemProgram: SystemProgram.programId,
+        mplCoreProgram: MPL_CORE_PROGRAM_ID,
+      })
+      .rpc();
+    console.log(`\nYour transaction signature : `, tx);
+    const asset = await fetchAsset(
+      umi,
+      publicKey(nftKeypair.publicKey.toBase58()),
+    );
+    expect(asset.freezeDelegate).to.exist;
+    console.log("FreezeDelegate Found !");
+    expect(asset.freezeDelegate?.frozen).to.equal(true);
+    console.log("Asset Frozen : ", asset.freezeDelegate?.frozen);
+  });
 });
